@@ -29,7 +29,8 @@ const App = () => {
           <Route path="/clientes" element={<Clientes />} /> 
           <Route path="/compras" element={<Compras />} /> 
           <Route path="/empleados" element={<Empleados />} />
-          <Route path="/usuarios" element={<Usuarios />} />  
+          <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/ventas" element={<Ventas />} />   
           <Route path="*" element={<h2>404 - Página no encontrada</h2>} />
         </Routes>
       </main>
