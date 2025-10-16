@@ -12,6 +12,8 @@ import Clientes from "./views/Clientes";
 import Empleados from "./views/Empleados";
 import Compras from "./views/Compras";
 import Usuarios from "./views/Usuarios";
+
+
 // Importar archivo de estilos
 import "./App.css";
 
@@ -21,7 +23,7 @@ const App = () => {
       <Encabezado />
       <main className="margen-superior-main">
         <Routes>
-          <Route path="/" element={<Inicio />} />
+          <Route path="/Inicio" element={<Inicio />} />
           <Route path="/login" element={<Login />} />
           <Route path="/categorias" element={<Categorias />} />
           <Route path="/productos" element={<Productos />} />
