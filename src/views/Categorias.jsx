@@ -14,7 +14,6 @@ const Categorias = () => {
   const [categoriaEditada, setCategoriaEditada] = useState(null);
   const [categoriaAEliminar, setCategoriaAEliminar] = useState(null);
 
-
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -27,10 +26,19 @@ const Categorias = () => {
     descripcion_categoria: ''
   });
 
-  const manejarCambioInput = (e) => {
+  const [paginaActual, establecerPaginaActual] = useState(1);
+  const elementosPorPagina = 5; // Número de productos por página
+
+    const manejarCambioInput = (e) => {
     const { name, value } = e.target;
     setNuevaCategoria(prev => ({ ...prev, [name]: value }));
   };
+
+  // Calcular categorias paginadas
+const categoriasPaginadas = categoriasFiltradas.slice(
+(paginaActual - 1) * elementosPorPagina,
+paginaActual * elementosPorPagina
+);
 
   const agregarCategoria = async () => {
     if (!nuevaCategoria.nombre_categoria.trim()) return;
@@ -171,11 +179,16 @@ const Categorias = () => {
 
 
         <TablaCategorias
-          categorias={categoriasFiltradas}     
-          cargando={cargando}                  
-          abrirModalEdicion={abrirModalEdicion}
-          abrirModalEliminacion={abrirModalEliminacion}
-        />
+  categorias={categoriasPaginadas}
+  cargando={cargando}
+  abrirModalEdicion={abrirModalEdicion}
+  abrirModalEliminacion={abrirModalEliminacion}
+  totalElementos={categorias.length} // Total de categorias
+  elementosPorPagina={elementosPorPagina} // Elementos por página
+  paginaActual={paginaActual} // Página actual
+  establecerPaginaActual={establecerPaginaActual} // Método para cambiar página
+/>
+
 
         <ModalRegistroCategoria
           mostrarModal={mostrarModal}
@@ -199,6 +212,9 @@ const Categorias = () => {
           categoria={categoriaAEliminar}           
           confirmarEliminacion={confirmarEliminacion}
         />
+
+        
+
 
       </Container>
     </>

@@ -3,6 +3,8 @@ import { Container, Row, Col, Button } from 'react-bootstrap';
 import TablaClientes from '../components/clientes/TablaClientes';
 import CuadroBusquedas from '../components/busquedas/CuadroBusquedas';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
+import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';
+import ModalEliminacionCliente from '../components/clientes/ModalEliminacionCliente';
 
 const Cliente = () => {
 
@@ -12,45 +14,61 @@ const Cliente = () => {
   const [clientesFiltradas, setClientesFiltradas] = useState([]);
   const [textoBusqueda, setTextoBusqueda] = useState("");
 
+  const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
+  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
+
+  const [clienteEditado, setClienteEditado] = useState(null);
+  const [clienteAEliminar, setClienteAEliminar] = useState(null);
+
+  const [paginaActual, establecerPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
+
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoCliente, setNuevoCliente] = useState({
-      primer_nombre: '',
-      segundo_nombre: '',
-      primer_apellido:'',
-      segundo_apellido: '',
-      celular:'',
-      Direccion:'',
-      Cedula:''
-    });
+    primer_nombre: '',
+    segundo_nombre: '',
+    primer_apellido: '',
+    segundo_apellido: '',
+    celular: '',
+    direccion: '',
+    cedula: ''
+  });
 
-    const manejarCambioInput = (e) => {
-  const { name, value } = e.target;
-  setNuevoCliente(prev => ({ ...prev, [name]: value }));
-};
+  const clientesPaginados = clientesFiltradas.slice(
+    (paginaActual - 1) * elementosPorPagina,
+    paginaActual * elementosPorPagina
+  );
 
-const agregarCliente = async () => {
-  if (!nuevoCliente.primer_nombre.trim()) return;
+  const manejarCambioInput = (e) => {
+    const { name, value } = e.target;
+    setNuevoCliente(prev => ({ ...prev, [name]: value }));
+  };
 
-  try {
-    const respuesta = await fetch('http://localhost:3000/api/registrarcliente', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(nuevoCliente)
-    });
+  const agregarCliente = async () => {
+    if (!nuevoCliente.primer_nombre.trim()) return;
 
-    if (!respuesta.ok) throw new Error('Error al guardar');
+    try {
+      const respuesta = await fetch('http://localhost:3000/api/registrarcliente', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoCliente)
+      });
 
-    // Limpiar y cerrar el modal
-    setNuevoCliente({primer_nombre: '', segundo_nombre: '', primer_apellido:'',
-      segundo_apellido: '', celular:'', Direccion:'', Cedula:'' });
-    setMostrarModal(false);
+      if (!respuesta.ok) throw new Error('Error al guardar');
 
-    await obtenerClientes(); // Refresca la lista
-  } catch (error) {
-    console.error("Error al agregar Cliente:", error);
-    alert("No se pudo guardar el cliente. Revisa la consola.");
-  }
-};
+      // Limpiar y cerrar el modal
+      setNuevoCliente({
+        primer_nombre: '', segundo_nombre: '', primer_apellido: '',
+        segundo_apellido: '', celular: '', Direccion: '', Cedula: ''
+      });
+      setMostrarModal(false);
+
+      await obtenerClientes(); // Refresca la lista
+    } catch (error) {
+      console.error("Error al agregar Cliente:", error);
+      alert("No se pudo guardar el cliente. Revisa la consola.");
+    }
+  };
 
 
   const obtenerClientes = async () => {
@@ -64,12 +82,55 @@ const agregarCliente = async () => {
       setClientes(datos);
       setClientesFiltradas(datos);
       setCargando(false);
-      
+
     } catch (error) {
       console.log(error.message);
       setCargando(false);
     }
   };
+
+  const abrirModalEdicion = (cliente) => {
+    setClienteEditado({ ...cliente }); // ← Carga fecha tal como está en BD
+    setMostrarModalEdicion(true);
+  };
+
+  const guardarEdicion = async () => {
+    if (!clienteEditado.primer_nombre.trim() || !clienteEditado.primer_apellido.trim()) return;
+    try {
+      const respuesta = await fetch(`http://localhost:3000/api/actualizarclientepatch/${clienteEditado.id_cliente}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(clienteEditado)
+      });
+      if (!respuesta.ok) throw new Error('Error al actualizar');
+      setMostrarModalEdicion(false);
+      await obtenerClientes();
+    } catch (error) {
+      console.error("Error al editar cliente:", error);
+      alert("No se pudo actualizar el cliente.");
+    }
+  };
+
+  const abrirModalEliminacion = (cliente) => {
+    setClienteAEliminar(cliente);
+    setMostrarModalEliminar(true);
+  };
+
+  const confirmarEliminacion = async () => {
+    try {
+      const respuesta = await fetch(`http://localhost:3000/api/eliminarcliente/${clienteAEliminar.id_cliente}`, {
+        method: 'DELETE',
+      });
+      if (!respuesta.ok) throw new Error('Error al eliminar');
+      setMostrarModalEliminar(false);
+      setClienteAEliminar(null);
+      await obtenerClientes();
+    } catch (error) {
+      console.error("Error al eliminar cliente:", error);
+      alert("No se pudo eliminar el cliente. Puede estar en uso.");
+    }
+  };
+
 
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
@@ -108,18 +169,39 @@ const agregarCliente = async () => {
           </Col>
         </Row>
 
-<Col className="text-end">
-  <Button
-    className='color-boton-registro'
-    onClick={() => setMostrarModal(true)}
-  >
-    + Nuevo Cliente
-  </Button>
-</Col>
+        <Col className="text-end">
+          <Button
+            className='color-boton-registro'
+            onClick={() => setMostrarModal(true)}
+          >
+            + Nuevo Cliente
+          </Button>
+        </Col>
 
         <TablaClientes
-          clientes={clientesFiltradas}
+          clientes={clientesPaginados}
           cargando={cargando}
+          abrirModalEdicion={abrirModalEdicion}
+          abrirModalEliminacion={abrirModalEliminacion}
+          totalElementos={clientes.length}
+          elementosPorPagina={elementosPorPagina}
+          paginaActual={paginaActual}
+          establecerPaginaActual={establecerPaginaActual}
+        />
+
+        <ModalEdicionCliente
+          mostrar={mostrarModalEdicion}
+          setMostrar={setMostrarModalEdicion}
+          clienteEditado={clienteEditado}
+          setClienteEditado={setClienteEditado}
+          guardarEdicion={guardarEdicion}
+        />
+
+        <ModalEliminacionCliente
+          mostrar={mostrarModalEliminar}
+          setMostrar={setMostrarModalEliminar}
+          cliente={clienteAEliminar}
+          confirmarEliminacion={confirmarEliminacion}
         />
 
         <ModalRegistroCliente
