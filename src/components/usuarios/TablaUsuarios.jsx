@@ -47,7 +47,7 @@ const TablaUsuarios = ({
 
   return (
     <>
-      <Table striped bordered hover>
+      <Table Table variant="primary" striped bordered hover>
         <thead>
           <tr>
             <BotonOrden campo="id_usuario" orden={orden} manejarOrden={manejarOrden}>

@@ -5,6 +5,8 @@ import CuadroBusquedas from '../components/busquedas/CuadroBusquedas';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
 import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';
 import ModalEliminacionCliente from '../components/clientes/ModalEliminacionCliente';
+import autoTable from "jspdf-autotable";
+import { Zoom, Fade } from 'react-awesome-reveal';
 
 const Cliente = () => {
 
@@ -33,6 +35,76 @@ const Cliente = () => {
     direccion: '',
     cedula: ''
   });
+
+  const generarPDFClientes = () => {
+    const doc = new jsPDF();
+  
+    // Encabezado del PDF
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0, 0, 220, 30, 'F');
+  
+    // Texto centrado en blanco
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.text("Lista de Clientes", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+  
+    const columnas = ["ID", "primer_nombre", "segundo_nombre", "primer_apellido","segundo_apellido", "celular", "direccion", "cedula"];
+    const filas = clientesFiltrados.map(cliente => [
+      cliente.id_cliente,
+      cliente.primer_nombre,
+      cliente.segundo_nombre,
+      cliente.primer_apellido,
+      cliente.segundo_apellido,
+      cliente.celular,
+      cliente.direccion,
+      cliente.cedula
+    ]);
+                
+  
+    const totalPaginas = "{total_pages_count_string}";
+  
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 2 },
+      margin: { top: 20, left: 14, right: 14 },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+      },
+      pageBreak: 'auto',
+      rowPageBreak: 'auto',
+  
+      didDrawPage: function (data) {
+        const alturaPagina = doc.internal.pageSize.getHeight();
+        const anchoPagina = doc.internal.pageSize.getWidth();
+        const numeroPagina = doc.internal.getNumberOfPages();
+  
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const piePagina = `Página ${numeroPagina} de ${totalPaginas}`;
+        doc.text(piePagina, anchoPagina / 2, alturaPagina - 10, { align: "center" });
+      },
+    });
+  
+    // Actualizar el marcador con el total real de páginas
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPaginas);
+    }
+  
+    // Guardar el PDF con nombre y fecha actual
+    const fecha = new Date();
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const nombreArchivo = `clientes_${dia}${mes}${anio}.pdf`;
+  
+    doc.save(nombreArchivo);
+  };
 
   const clientesPaginados = clientesFiltradas.slice(
     (paginaActual - 1) * elementosPorPagina,
@@ -178,6 +250,8 @@ const Cliente = () => {
           </Button>
         </Col>
 
+<Fade cascade triggerOnce delay={10} duration={600}>
+          
         <TablaClientes
           clientes={clientesPaginados}
           cargando={cargando}
@@ -188,6 +262,7 @@ const Cliente = () => {
           paginaActual={paginaActual}
           establecerPaginaActual={establecerPaginaActual}
         />
+        </Fade>
 
         <ModalEdicionCliente
           mostrar={mostrarModalEdicion}
@@ -213,6 +288,16 @@ const Cliente = () => {
         />
 
       </Container>
+      <Col lg ={3} md={4} sm={4} xs={5}>
+          <Button 
+          className="mb-3"
+          onClick={generarPDFClientes}
+          variant="secondary"
+          style={{width: "100%"}}
+          >
+            Generar reporte PDF 
+          </Button>
+          </Col>
     </>
   );
 }

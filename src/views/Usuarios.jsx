@@ -5,6 +5,8 @@ import CuadroBusquedas from '../components/busquedas/CuadroBusquedas';
 import ModalRegistroUsuario from '../components/usuarios/ModalRegistroUsuario';
 import ModalEdicionUsuario from '../components/usuarios/ModalEdicionUsuario';
 import ModalEliminacionUsuario from '../components/usuarios/ModalEliminacionUsuario';
+import autoTable from "jspdf-autotable";
+import { Zoom, Fade } from 'react-awesome-reveal';
 
 const Usuarios = () => {
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
@@ -27,6 +29,70 @@ const Usuarios = () => {
     usuario: '',
     contraseña: ''
   });
+
+  const generarPDFUsuarios = () => {
+    const doc = new jsPDF();
+  
+    // Encabezado del PDF
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0, 0, 220, 30, 'F');
+  
+    // Texto centrado en blanco
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.text("Lista de Usuarios", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+  
+    const columnas = ["ID", "Usuario", "Contraseña"];
+    const filas = usuariosFiltrados.map(usuario => [
+      usuario.id_usuario,
+      usuario.usuario,
+      usuario.contraseña
+    ]);
+  
+    const totalPaginas = "{total_pages_count_string}";
+  
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 2 },
+      margin: { top: 20, left: 14, right: 14 },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+      },
+      pageBreak: 'auto',
+      rowPageBreak: 'auto',
+  
+      didDrawPage: function (data) {
+        const alturaPagina = doc.internal.pageSize.getHeight();
+        const anchoPagina = doc.internal.pageSize.getWidth();
+        const numeroPagina = doc.internal.getNumberOfPages();
+  
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const piePagina = `Página ${numeroPagina} de ${totalPaginas}`;
+        doc.text(piePagina, anchoPagina / 2, alturaPagina - 10, { align: "center" });
+      },
+    });
+  
+    // Actualizar el marcador con el total real de páginas
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPaginas);
+    }
+  
+    // Guardar el PDF con nombre y fecha actual
+    const fecha = new Date();
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const nombreArchivo = `usuarios_${dia}${mes}${anio}.pdf`;
+  
+    doc.save(nombreArchivo);
+  };
 
   const usuariosPaginados = usuariosFiltrados.slice(
     (paginaActual - 1) * elementosPorPagina,
@@ -164,8 +230,7 @@ const Usuarios = () => {
               manejarCambioBusqueda={manejarCambioBusqueda}
             />
           </Col>
-        </Row>
-        <Col className="text-end">
+          <Col className="text-end">
           <Button
             className='color-boton-registro'
             onClick={() => setMostrarModal(true)}
@@ -173,8 +238,20 @@ const Usuarios = () => {
             + Nuevo Usuario
           </Button>
         </Col>
-
-
+      <Col lg ={3} md={4} sm={4} xs={5}>
+          <Button 
+          className="mb-3"
+          onClick={generarPDFUsuarios}
+          variant="secondary"
+          style={{width: "100%"}}
+          >
+            Generar reporte PDF 
+          </Button>
+          </Col>
+        </Row>
+        
+      
+<Fade cascade triggerOnce delay={10} duration={600}>
         <TablaUsuarios
           usuarios={usuariosPaginados}
           cargando={cargando}
@@ -185,6 +262,7 @@ const Usuarios = () => {
           paginaActual={paginaActual}
           establecerPaginaActual={establecerPaginaActual}
         />
+        </Fade>
 
         <ModalRegistroUsuario
           mostrarModal={mostrarModal}
@@ -210,6 +288,7 @@ const Usuarios = () => {
                 />
 
       </Container>
+      
     </>
   );
 }

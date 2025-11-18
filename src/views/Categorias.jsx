@@ -5,6 +5,8 @@ import CuadroBusquedas from '../components/busquedas/CuadroBusquedas';
 import ModalRegistroCategoria from '../components/categorias/ModalRegistroCategoria';
 import ModalEdicionCategoria from '../components/categorias/ModalEdicionCategoria';
 import ModalEliminacionCategoria from '../components/categorias/ModalEliminacionCategoria';
+import autoTable from "jspdf-autotable";
+import { Zoom, Fade } from 'react-awesome-reveal';
 
 const Categorias = () => {
 
@@ -25,6 +27,70 @@ const Categorias = () => {
     nombre_categoria: '',
     descripcion_categoria: ''
   });
+
+  const generarPDFCategorias = () => {
+    const doc = new jsPDF();
+  
+    // Encabezado del PDF
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0, 0, 220, 30, 'F');
+  
+    // Texto centrado en blanco
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.text("Lista de Categorias", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+  
+    const columnas = ["ID", "Nombre", "Descripción"];
+    const filas = categoriasFiltradas.map(categoria => [
+      categoria.id_categoria,
+      categoria.nombre_categoria,
+      categoria.descripcion_categoria
+    ]);
+  
+    const totalPaginas = "{total_pages_count_string}";
+  
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 2 },
+      margin: { top: 20, left: 14, right: 14 },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+      },
+      pageBreak: 'auto',
+      rowPageBreak: 'auto',
+  
+      didDrawPage: function (data) {
+        const alturaPagina = doc.internal.pageSize.getHeight();
+        const anchoPagina = doc.internal.pageSize.getWidth();
+        const numeroPagina = doc.internal.getNumberOfPages();
+  
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const piePagina = `Página ${numeroPagina} de ${totalPaginas}`;
+        doc.text(piePagina, anchoPagina / 2, alturaPagina - 10, { align: "center" });
+      },
+    });
+  
+    // Actualizar el marcador con el total real de páginas
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPaginas);
+    }
+  
+    // Guardar el PDF con nombre y fecha actual
+    const fecha = new Date();
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const nombreArchivo = `categorias_${dia}${mes}${anio}.pdf`;
+  
+    doc.save(nombreArchivo);
+  };
 
   const [paginaActual, establecerPaginaActual] = useState(1);
   const elementosPorPagina = 5; // Número de productos por página
@@ -177,7 +243,7 @@ paginaActual * elementosPorPagina
           </Button>
         </Col>
 
-
+        <Fade cascade triggerOnce delay={10} duration={600}>
         <TablaCategorias
   categorias={categoriasPaginadas}
   cargando={cargando}
@@ -188,7 +254,7 @@ paginaActual * elementosPorPagina
   paginaActual={paginaActual} // Página actual
   establecerPaginaActual={establecerPaginaActual} // Método para cambiar página
 />
-
+</Fade>
 
         <ModalRegistroCategoria
           mostrarModal={mostrarModal}
@@ -213,10 +279,17 @@ paginaActual * elementosPorPagina
           confirmarEliminacion={confirmarEliminacion}
         />
 
-        
-
-
       </Container>
+      <Col lg ={3} md={4} sm={4} xs={5}>
+          <Button 
+          className="mb-3"
+          onClick={generarPDFCategorias}
+          variant="secondary"
+          style={{width: "100%"}}
+          >
+            Generar reporte PDF 
+          </Button>
+          </Col>
     </>
   );
 }

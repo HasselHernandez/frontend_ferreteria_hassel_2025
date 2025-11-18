@@ -48,7 +48,7 @@ const TablaClientes = ({
 
   return (
     <>
-      <Table striped bordered hover>
+      <Table variant="primary" striped bordered hover>
         <thead>
           <tr>
             <BotonOrden campo="id_cliente" orden={orden} manejarOrden={manejarOrden}>

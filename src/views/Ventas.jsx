@@ -6,6 +6,8 @@ import ModalRegistroVenta from '../components/ventas/ModalRegistroVenta';
 import ModalEdicionVenta from '../components/ventas/ModalEdicionVenta';
 import ModalEliminacionVenta from '../components/ventas/ModalEliminacionVenta';
 import ModalDetallesVenta from '../components/detalles_ventas/ModalDetallesVenta';
+import autoTable from "jspdf-autotable";
+import { Zoom, Fade } from 'react-awesome-reveal';
 
 const Ventas = () => {
   const [ventas, setVentas] = useState([]);
@@ -37,6 +39,67 @@ const Ventas = () => {
     fecha_venta: hoy,
     total_venta: 0
   });
+
+  const generarPDFVentas = () => {
+    const doc = new jsPDF();
+  
+    // Encabezado del PDF
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0, 0, 220, 30, 'F');
+    // Texto centrado en blanco
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.text("Lista de Ventas", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+  
+    const columnas = ["ID", "Cliente", "Empleado", "Fecha", "Total"];
+    const filas = ventasFiltradas.map(venta => [
+      venta.id_venta,
+      venta.nombre_cliente,
+      venta.nombre_empleado,
+      venta.fecha_venta,
+      `C$ ${venta.total_venta}`,
+    ]);
+    const totalPaginas = "{total_pages_count_string}";
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 2 },
+      margin: { top: 20, left: 14, right: 14 },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+      },
+      pageBreak: 'auto',
+      rowPageBreak: 'auto',
+      didDrawPage: function (data) {
+      const alturaPagina = doc.internal.pageSize.getHeight();
+      const anchoPagina = doc.internal.pageSize.getWidth();
+      const numeroPagina = doc.internal.getNumberOfPages();
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      const piePagina = `Página ${numeroPagina} de ${totalPaginas}`;
+      doc.text(piePagina, anchoPagina / 2, alturaPagina - 10, { align: "center" });
+    },
+    });
+     // Actualizar el marcador con el total real de páginas
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPaginas);
+    }
+  
+    // Guardar el PDF con nombre y fecha actual
+    const fecha = new Date();
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const nombreArchivo = `ventas_${dia}${mes}${anio}.pdf`;
+  
+    doc.save(nombreArchivo);
+  };
+
 
   // === ESTADO PARA EDICIÓN (SEPARADO) ===
   const [ventaEnEdicion, setVentaEnEdicion] = useState(null);
@@ -116,7 +179,7 @@ const Ventas = () => {
   // === CARGAR DETALLES CON NOMBRE DE PRODUCTO ===
   const obtenerDetallesVenta = async (id_venta) => {
     try {
-      const resp = await fetch('http://localhost:3000/api/detallesventas');
+      const resp = await fetch('http://localhost:3000/api/detalles_ventas');
       if (!resp.ok) throw new Error('Error al cargar detalles');
       const todos = await resp.json();
       const filtrados = todos.filter(d => d.id_venta === parseInt(id_venta));
@@ -314,6 +377,7 @@ const Ventas = () => {
   }, []);
 
   return (
+    <>
     <Container className="mt-4">
       <h4>Ventas</h4>
       <Row>
@@ -328,8 +392,21 @@ const Ventas = () => {
             + Nueva Venta
           </Button>
         </Col>
+
+        <Col lg ={3} md={4} sm={4} xs={5}>
+          <Button 
+          className="mb-3"
+          onClick={generarPDFVentas}
+          variant="secondary"
+          style={{width: "100%"}}
+          >
+            Generar reporte PDF 
+          </Button>
+          </Col>
+          
       </Row>
 
+<Fade cascade triggerOnce delay={10} duration={600}>
       <TablaVentas
         ventas={ventasPaginadas}
         cargando={cargando}
@@ -341,6 +418,7 @@ const Ventas = () => {
         paginaActual={paginaActual}
         establecerPaginaActual={setPaginaActual}
       />
+      </Fade>
 
       <ModalRegistroVenta
         mostrar={mostrarModalRegistro}
@@ -383,6 +461,8 @@ const Ventas = () => {
         detalles={detallesVenta}
       />
     </Container>
+    
+    </>
   );
 };
 

@@ -11,7 +11,7 @@ const TablaVentas = ({
 
   return (
     <>
-      <Table striped bordered hover responsive className="mt-3">
+      <Table Table variant="primary" striped bordered hover responsive className="mt-3">
         <thead>
           <tr>
             <th>ID</th>

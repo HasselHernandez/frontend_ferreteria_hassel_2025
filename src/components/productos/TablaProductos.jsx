@@ -45,7 +45,7 @@ const TablaProductos = ({
 
   return (
     <>
-      <Table striped bordered hover className="mt-3">
+      <Table Table variant="primary" striped bordered hover className="mt-3">
         <thead>
           <tr>
             <BotonOrden campo="id_producto" orden={orden} manejarOrden={manejarOrden}>

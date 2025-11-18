@@ -7,6 +7,7 @@ import ModalEdicionProducto from '../components/productos/ModalEdicionProducto';
 import ModalEliminacionProducto from '../components/productos/ModalEliminacionProducto';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Zoom, Fade } from 'react-awesome-reveal';
 
 const Productos = () => {
 
@@ -239,8 +240,19 @@ const Productos = () => {
               + Nuevo Producto
             </Button>
           </Col>
+          <Col lg ={3} md={4} sm={4} xs={5}>
+          <Button 
+          className="mb-3"
+          onClick={generarPDFProductos}
+          variant="secondary"
+          style={{width: "100%"}}
+          >
+            Generar reporte PDF 
+          </Button>
+          </Col>
         </Row>
 
+<Fade cascade triggerOnce delay={10} duration={600}>
         <TablaProductos
           productos={productosPaginados}
           cargando={cargando}
@@ -251,6 +263,7 @@ const Productos = () => {
           paginaActual={paginaActual}
           establecerPaginaActual={establecerPaginaActual}
         />
+        </Fade>
 
         <ModalRegistroProducto
           mostrarModal={mostrarModal}
@@ -275,16 +288,7 @@ const Productos = () => {
           confirmarEliminacion={confirmarEliminacion}
         />
       </Container>
-      <Col lg ={3} md={4} sm={4} xs={5}>
-          <Button 
-          className="mb-3"
-          onClick={generarPDFProductos}
-          variant="secondary"
-          style={{width: "100%"}}
-          >
-            Generar reporte PDF 
-          </Button>
-          </Col>
+      
     </>
   );
 };
